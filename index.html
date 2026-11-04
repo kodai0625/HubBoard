@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="format-detection" content="telephone=no">
 <link rel="apple-touch-icon" href="icon.png">
-<link rel="stylesheet" href="style.css?v=4362b05d">
+<link rel="stylesheet" href="style.css?v=589db1fa">
 <title>Hub Board</title>
 </head>
 <body>
@@ -33,6 +33,10 @@
         <span class="vice__name">Vice</span>
         <span id="viceSub" class="vice__sub">何でも書いて送ると、タスクにして担当の AI に回します</span>
         <span id="viceDot" class="dot-unread" hidden></span>
+      </button>
+      <button id="inboxCard" class="inboxcard" type="button" hidden>
+        <span class="inboxcard__name">✋ あなた待ち</span>
+        <span id="inboxCount" class="inboxcard__n"></span>
       </button>
       <form id="addForm" class="add" autocomplete="off">
         <input id="addInput" type="text" placeholder="タスクを足す" enterkeyhint="done">
@@ -81,6 +85,18 @@
     </div>
   </section>
 
+  <section id="inboxView" class="view" hidden>
+    <header class="bar bar--detail">
+      <button id="inboxBack" class="back" type="button" aria-label="一覧へ戻る">‹ 一覧</button>
+      <div class="ttl">
+        <div class="ttl__main">あなた待ち</div>
+        <div class="ttl__sub">答えは、そのタスクの AI に次の頼みとして届きます</div>
+      </div>
+    </header>
+    <div class="relaybar" data-relaybar hidden></div>
+    <main class="scroll" id="inboxList"></main>
+  </section>
+
   <div id="pair" class="pair" hidden>
     <div class="pair__box">
       <h2>Mac とつなぐ</h2>
@@ -96,7 +112,7 @@
 
   <div id="toast" class="toast" role="alert" hidden></div>
 </div>
-<script src="relay.js?v=4362b05d"></script>
-<script src="app.js?v=4362b05d"></script>
+<script src="relay.js?v=589db1fa"></script>
+<script src="app.js?v=589db1fa"></script>
 </body>
 </html>

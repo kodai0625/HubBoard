@@ -170,6 +170,59 @@ input, textarea { font: inherit; color: inherit; }
 .vice__sub { display: block; font-size: 13px; opacity: 0.8; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 16px; }
 .vice .dot-unread { position: absolute; right: 14px; top: 16px; background: #ffffff; }
 
+.inboxcard {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: var(--warn-soft);
+  border: 1px solid var(--warn);
+  color: var(--text);
+}
+.inboxcard__name { flex: 1; font-weight: 700; }
+.inboxcard__n { color: var(--warn); font-weight: 700; }
+
+.ibx {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  border-left: 4px solid var(--warn);
+}
+.ibx--notify { border-left-color: var(--accent); }
+.ibx--question { border-left-color: #8e44ad; }
+.ibx__head { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--sub); }
+.ibx__kind { font-weight: 700; color: var(--text); }
+.ibx__task { color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: left; font-size: 12px; }
+.ibx__title { font-weight: 700; margin: 6px 0 4px; line-height: 1.4; }
+.ibx__body { font-size: 14px; color: var(--sub); white-space: pre-wrap; line-height: 1.5; }
+.ibx__btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.ibx__btns button {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 14px;
+}
+.ibx__btns button.is-main { background: var(--accent); color: #ffffff; }
+.ibx__btns button.is-quiet { background: transparent; color: var(--sub); }
+.ibx textarea {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  padding: 8px 10px;
+  font-size: 16px;
+  resize: vertical;
+  min-height: 44px;
+}
+.ibx__link { display: inline-block; margin-top: 8px; color: var(--accent); font-size: 14px; }
+
 .add { display: flex; gap: 8px; margin-bottom: 8px; }
 .add input {
   flex: 1;

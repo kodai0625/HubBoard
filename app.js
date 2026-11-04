@@ -56,6 +56,9 @@ const S = {
   probeAt: 0,                          // 預かり口のとき、最後に Mac を試した時刻
   relayAt: 0,                          // 最後に預かり口の写しを読んだ時刻
   chatSig: '',                         // 預かり口のとき、前に描いた会話の中身
+  inboxOpen: false,                    // 「あなた待ち」を開いているか
+  inboxSig: '',                        // 前に描いたあなた待ち（同じなら描き直さない。書きかけを消さないため）
+  inboxPushed: false,
 };
 
 // ---------- Mac とのやり取り ----------
@@ -170,6 +173,7 @@ function toDirect() {
 
 /** 道が変わったら、開いているタスクを読み直す */
 function resetDetail() {
+  S.inboxSig = '';
   S.task = null;
   S.entries = [];
   S.total = 0;
@@ -285,6 +289,13 @@ function renderList() {
   };
   chip('', 'すべて', '', all.length);
   st.projects.forEach((p) => chip(p.id, p.name, p.color, all.filter((t) => t.project === p.id).length));
+
+  // あなた待ち
+  const ib = st.inbox || [];
+  $('#inboxCard').hidden = false;
+  $('#inboxCount').textContent = ib.length ? ib.length + '件' : 'なし';
+  $('#inboxCard').classList.toggle('is-empty', !ib.length);
+  if (S.inboxOpen) renderInbox();
 
   // Vice
   const v = st.vice;
@@ -428,6 +439,132 @@ $('#addForm').addEventListener('submit', async (e) => {
   }
 });
 
+// ---------- あなた待ち ----------
+
+$('#inboxCard').addEventListener('click', () => openInboxView());
+$('#inboxBack').addEventListener('click', () => {
+  if (S.inboxPushed) { history.back(); return; }
+  closeInboxView();
+});
+
+function openInboxView(fromHistory) {
+  S.inboxOpen = true;
+  S.inboxSig = '';
+  $('#list').hidden = true;
+  $('#detail').hidden = true;
+  $('#inboxView').hidden = false;
+  S.inboxPushed = !fromHistory;
+  if (!fromHistory) history.pushState({ inbox: true }, '', location.href);
+  renderInbox();
+  tick();
+}
+
+function closeInboxView() {
+  S.inboxOpen = false;
+  $('#inboxView').hidden = true;
+  $('#list').hidden = false;
+  tick();
+}
+
+function renderInbox() {
+  const items = (S.state && S.state.inbox) || [];
+  const sig = items.map((x) => x.id).join(',');
+  if (sig === S.inboxSig) return;
+  S.inboxSig = sig;
+  const box = $('#inboxList');
+  box.textContent = '';
+  if (!items.length) {
+    const p = document.createElement('p');
+    p.className = 'empty';
+    p.textContent = 'いま、あなたを待っているものはありません';
+    box.append(p);
+    return;
+  }
+  items.forEach((x) => box.append(inboxItem(x)));
+}
+
+function inboxItem(x) {
+  const d = document.createElement('div');
+  d.className = 'ibx ibx--' + x.kind;
+  const head = document.createElement('div');
+  head.className = 'ibx__head';
+  const k = document.createElement('span');
+  k.className = 'ibx__kind';
+  k.textContent = x.kindLabel;
+  const t = document.createElement('button');
+  t.type = 'button';
+  t.className = 'ibx__task';
+  t.textContent = x.taskTitle;
+  t.addEventListener('click', () => { closeInboxView(); openTask(x.task); });
+  const at = document.createElement('span');
+  at.textContent = hm(new Date(x.at * 1000));
+  head.append(k, t, at);
+  const title = document.createElement('div');
+  title.className = 'ibx__title';
+  title.textContent = x.title;
+  d.append(head, title);
+  if (x.body) {
+    const b = document.createElement('div');
+    b.className = 'ibx__body';
+    linkify(b, x.body);
+    d.append(b);
+  }
+  if (x.link) {
+    const a = document.createElement('a');
+    a.className = 'ibx__link';
+    a.href = x.link;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = '開く';
+    d.append(a);
+  }
+  let area = null;
+  if (x.kind !== 'notify') {
+    area = document.createElement('textarea');
+    area.rows = 1;
+    area.placeholder = x.kind === 'question' ? '答えを書く' : 'ひとこと・直してほしいこと（なくてもよい）';
+    d.append(area);
+  }
+  const btns = document.createElement('div');
+  btns.className = 'ibx__btns';
+  const btn = (label, cls, fn) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    if (cls) b.className = cls;
+    b.addEventListener('click', fn);
+    btns.append(b);
+  };
+  const val = () => (area ? area.value.trim() : '');
+  if (x.kind === 'notify') {
+    btn('見た', 'is-main', () => answerInbox(x, 'seen'));
+  } else if (x.kind === 'question') {
+    (x.choices || []).forEach((c) => btn(c, '', () => answerInbox(x, 'answer', c)));
+    btn('答える', 'is-main', () => { if (val()) answerInbox(x, 'answer', val()); else toast('答えを書いてください'); });
+    btn('見送る', 'is-quiet', () => answerInbox(x, 'seen'));
+  } else {
+    btn('OK', 'is-main', () => answerInbox(x, 'ok', val()));
+    btn('直して戻す', '', () => { if (val()) answerInbox(x, 'edit', val()); else toast('どう直すかを書いてください'); });
+    btn('やめる', 'is-quiet', () => answerInbox(x, 'no', val()));
+  }
+  d.append(btns);
+  return d;
+}
+
+async function answerInbox(x, action, text) {
+  try {
+    const r = await api('/api/inbox/' + x.id, { action, text: text || '' });
+    toast(r.queued ? '預けました。Mac が起きたら AI に届きます'
+      : action === 'seen' ? '消しました' : 'AI に届けました');
+    if (r.queued) renderRelayBar();
+    S.inboxSig = '';
+    S.sig = '';
+    await loadState();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
 $('#viceCard').addEventListener('click', () => {
   if (S.state && S.state.vice) openTask(S.state.vice.id);
 });
@@ -471,8 +608,12 @@ $('#back').addEventListener('click', () => {
 });
 
 window.addEventListener('popstate', () => {
-  const id = history.state && history.state.task;
-  if (id) openTask(id, true); else if (S.open) closeTask();
+  const st = history.state || {};
+  if (st.inbox) { openInboxView(true); return; }
+  if (S.inboxOpen) { S.inboxOpen = false; $('#inboxView').hidden = true; }
+  if (st.task) openTask(st.task, true);
+  else if (S.open) closeTask();
+  else { $('#list').hidden = false; tick(); }
 });
 
 async function loadTask() {

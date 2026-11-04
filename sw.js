@@ -3,7 +3,7 @@
 // 画面のファイルだけを控えて、電波が弱いときでも画面は開けるようにする。
 // ★Mac・預かり口とのやり取り（よそのサーバー）は控えない（中身を端末に残さないため。写しは暗号のまま app 側が持つ）
 // ★版の印は 公開用を作る.py が中身から入れる
-const VERSION = '4362b05d';
+const VERSION = '589db1fa';
 const CACHE = 'hubboard-' + VERSION;
 const SHELL = ['./', './index.html', './app.js', './relay.js', './style.css', './icon.png'];
 

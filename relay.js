@@ -175,6 +175,8 @@ const Relay = {
     const st = JSON.parse(JSON.stringify(this.snap.state));
     st.working = 0;
     st.relay = true;
+    // 答えを預けたあなた待ちは、もう出さない
+    st.inbox = (st.inbox || []).filter((x) => !this.pending.some((p) => p.kind === 'inbox' && p.item === x.id));
     const fix = (t) => {
       t.working = null;                         // Mac が切れているので、動いていない
       t.done = this.doneOf(t);
@@ -214,6 +216,11 @@ const Relay = {
       throw new Error('まだ Mac の写しがありません。いちど Mac を起こしてから、開き直してください');
     }
     if (path === '/api/state') return this.state();
+    const ib = path.match(/^\/api\/inbox\/([0-9A-Fa-f-]{36})$/);
+    if (ib && body) {
+      await this.queue({ kind: 'inbox', item: ib[1], action: body.action, text: body.text || '' });
+      return { ok: true, queued: true };
+    }
     if (path === '/api/task' && body) {
       await this.queue({ kind: 'add', title: body.title, project: body.project || null });
       return { ok: true, queued: true };
