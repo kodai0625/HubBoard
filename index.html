@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hub Board">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="stylesheet" href="style.css?v=4362b05d">
+<title>Hub Board</title>
+</head>
+<body>
+<!--
+  Hub Board のスマホ版（設計.md「段階5」）。Mac の Hub Board が家の Wi-Fi の中で配る。
+  ★この画面には中身が無い。タスク・会話・メモは、合言葉をつけて Mac に聞いたときだけ届く
+-->
+<div id="app">
+
+  <section id="list" class="view">
+    <header class="bar">
+      <h1>Hub Board</h1>
+      <span id="conn" class="conn" role="status"></span>
+    </header>
+    <div class="relaybar" data-relaybar hidden></div>
+    <nav id="projects" class="chips" aria-label="プロジェクト"></nav>
+    <main class="scroll" id="listScroll">
+      <button id="viceCard" class="vice" type="button">
+        <span class="vice__name">Vice</span>
+        <span id="viceSub" class="vice__sub">何でも書いて送ると、タスクにして担当の AI に回します</span>
+        <span id="viceDot" class="dot-unread" hidden></span>
+      </button>
+      <form id="addForm" class="add" autocomplete="off">
+        <input id="addInput" type="text" placeholder="タスクを足す" enterkeyhint="done">
+        <button type="submit">足す</button>
+      </form>
+      <div id="sections"></div>
+      <p id="empty" class="empty" hidden>タスクはありません</p>
+    </main>
+    <footer id="foot" class="foot"></footer>
+  </section>
+
+  <section id="detail" class="view" hidden>
+    <header class="bar bar--detail">
+      <button id="back" class="back" type="button" aria-label="一覧へ戻る">‹ 一覧</button>
+      <div class="ttl">
+        <div id="dTitle" class="ttl__main"></div>
+        <div id="dSub" class="ttl__sub"></div>
+      </div>
+      <button id="dDone" class="dDone" type="button">おわった</button>
+    </header>
+    <div class="relaybar" data-relaybar hidden></div>
+    <div class="seg" role="tablist">
+      <button type="button" data-tab="chat" class="on" role="tab">チャット</button>
+      <button type="button" data-tab="memo" role="tab">メモ</button>
+    </div>
+
+    <div id="chatPane" class="pane">
+      <div id="chat" class="chat"></div>
+      <div id="workBar" class="work" hidden>
+        <span class="spin" aria-hidden="true"></span>
+        <span id="workText" class="work__text"></span>
+        <button id="stopBtn" type="button">止める</button>
+      </div>
+      <form id="sendForm" class="send" autocomplete="off">
+        <textarea id="sendInput" rows="1" placeholder="AI に頼む"></textarea>
+        <button id="sendBtn" type="submit">送る</button>
+      </form>
+    </div>
+
+    <div id="memoPane" class="pane" hidden>
+      <textarea id="memo" class="memo" spellcheck="false" placeholder="メモ（自分も AI も書けます）"></textarea>
+      <div class="memobar">
+        <span id="memoNote" class="memobar__note"></span>
+        <button id="memoSave" type="button">保存</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="pair" class="pair" hidden>
+    <div class="pair__box">
+      <h2>Mac とつなぐ</h2>
+      <p id="pairText">合言葉がありません。</p>
+      <ol>
+        <li>Mac の Hub Board で 設定（⌘,）を開く</li>
+        <li>「スマホ版」の「iPhone から使えるようにする」を入れる</li>
+        <li>「iPhone アプリ」の QR を、iPhone のカメラで読む</li>
+        <li>Safari の 共有 →「ホーム画面に追加」</li>
+      </ol>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+</div>
+<script src="relay.js?v=4362b05d"></script>
+<script src="app.js?v=4362b05d"></script>
+</body>
+</html>
