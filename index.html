@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="format-detection" content="telephone=no">
 <link rel="apple-touch-icon" href="icon.png">
-<link rel="stylesheet" href="style.css?v=589db1fa">
+<link rel="stylesheet" href="style.css?v=f1a3af97">
 <title>Hub Board</title>
 </head>
 <body>
@@ -38,6 +38,14 @@
         <span class="inboxcard__name">✋ あなた待ち</span>
         <span id="inboxCount" class="inboxcard__n"></span>
       </button>
+      <div id="todayCard" class="todaycard" hidden>
+        <div class="todaycard__head">
+          <span class="todaycard__name">☀︎ 今日</span>
+          <button id="triageBtn" type="button">振り分ける</button>
+          <button id="wrapupBtn" type="button">締める</button>
+        </div>
+        <div id="todayChips" class="todaycard__chips"></div>
+      </div>
       <form id="addForm" class="add" autocomplete="off">
         <input id="addInput" type="text" placeholder="タスクを足す" enterkeyhint="done">
         <button type="submit">足す</button>
@@ -58,6 +66,7 @@
       <button id="dDone" class="dDone" type="button">おわった</button>
     </header>
     <div class="relaybar" data-relaybar hidden></div>
+    <div id="triageLine" class="triageline" hidden></div>
     <div class="seg" role="tablist">
       <button type="button" data-tab="chat" class="on" role="tab">チャット</button>
       <button type="button" data-tab="memo" role="tab">メモ</button>
@@ -112,7 +121,7 @@
 
   <div id="toast" class="toast" role="alert" hidden></div>
 </div>
-<script src="relay.js?v=589db1fa"></script>
-<script src="app.js?v=589db1fa"></script>
+<script src="relay.js?v=f1a3af97"></script>
+<script src="app.js?v=f1a3af97"></script>
 </body>
 </html>

@@ -216,6 +216,10 @@ const Relay = {
       throw new Error('まだ Mac の写しがありません。いちど Mac を起こしてから、開き直してください');
     }
     if (path === '/api/state') return this.state();
+    if (path === '/api/routine' && body) {
+      await this.queue({ kind: 'routine', action: body.action });
+      return { ok: true, queued: true };
+    }
     const ib = path.match(/^\/api\/inbox\/([0-9A-Fa-f-]{36})$/);
     if (ib && body) {
       await this.queue({ kind: 'inbox', item: ib[1], action: body.action, text: body.text || '' });
@@ -250,6 +254,9 @@ const Relay = {
         return { ok: true, queued: true, memoTime: body.base || 0 };
       case 'read':
         return { ok: true };
+      case 'ask':
+        await this.queue({ kind: 'ask', task: id });
+        return { ok: true, queued: true };
       default:
         throw new Error('Mac が切れているので、できません');
     }

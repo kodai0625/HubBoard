@@ -59,7 +59,11 @@ const S = {
   inboxOpen: false,                    // 「あなた待ち」を開いているか
   inboxSig: '',                        // 前に描いたあなた待ち（同じなら描き直さない。書きかけを消さないため）
   inboxPushed: false,
+  colorFilter: '',                     // 今日の色で絞る（'' = 絞らない）
+  triageSig: '',                       // 前に描いた「今日の色」の行
 };
+
+const COLORS = [['green', '緑'], ['yellow', '黄'], ['red', '赤'], ['gray', '灰']];
 
 // ---------- Mac とのやり取り ----------
 
@@ -290,6 +294,9 @@ function renderList() {
   chip('', 'すべて', '', all.length);
   st.projects.forEach((p) => chip(p.id, p.name, p.color, all.filter((t) => t.project === p.id).length));
 
+  // 今日（朝の振り分け）
+  renderToday(st);
+
   // あなた待ち
   const ib = st.inbox || [];
   $('#inboxCard').hidden = false;
@@ -310,7 +317,8 @@ function renderList() {
   box.textContent = '';
   let shown = 0;
   st.sections.forEach((sec) => {
-    const tasks = sec.tasks.filter((t) => !S.project || t.project === S.project);
+    const tasks = sec.tasks.filter((t) => (!S.project || t.project === S.project)
+      && (!S.colorFilter || (t.triage && t.triage.color === S.colorFilter)));
     if (!tasks.length) return;
     shown += tasks.length;
     const h = document.createElement('div');
@@ -343,6 +351,12 @@ function row(t) {
   title.textContent = t.title;
   const sub = document.createElement('div');
   sub.className = 'row__s';
+  if (t.triage && !t.done) {
+    const pill = document.createElement('span');
+    pill.className = 'tpill tc-' + t.triage.color;
+    pill.textContent = t.triage.label;
+    sub.append(pill);
+  }
   const p = projectOf(t.project);
   if (p) {
     const d = document.createElement('span');
@@ -370,7 +384,7 @@ function row(t) {
   txt.textContent = t.working ? ('⚙︎ ' + t.working) : bits.concat(t.lastLine ? [t.lastLine] : []).join('　');
   sub.append(txt);
   main.append(title);
-  if (sub.childNodes.length && (p || t.due || txt.textContent)) main.append(sub);
+  if (sub.childNodes.length && (p || t.due || t.triage || txt.textContent)) main.append(sub);
   if (t.kind === 'pending') {
     main.addEventListener('click', () => toast('Mac が起きたら足します'));
     check.disabled = true;
@@ -438,6 +452,57 @@ $('#addForm').addEventListener('submit', async (e) => {
     input.disabled = false;
   }
 });
+
+// ---------- 今日（朝の振り分け・夜の締め） ----------
+
+function renderToday(st) {
+  const td = st.today || { counts: {} };
+  const counts = td.counts || {};
+  $('#todayCard').hidden = false;
+  const box = $('#todayChips');
+  box.textContent = '';
+  const any = COLORS.some(([c]) => counts[c]);
+  if (td.busy) {
+    const s = document.createElement('span');
+    s.textContent = 'Vice が作業中です…';
+    box.append(s);
+  } else if (!any) {
+    const s = document.createElement('span');
+    s.textContent = 'まだ今日の振り分けをしていません';
+    box.append(s);
+  }
+  if (any) {
+    COLORS.forEach(([c, label]) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tchip tc-' + c + (S.colorFilter === c ? ' on' : '');
+      b.textContent = label + ' ' + (counts[c] || 0);
+      b.addEventListener('click', () => {
+        S.colorFilter = S.colorFilter === c ? '' : c;
+        S.sig = '';
+        renderList();
+      });
+      box.append(b);
+    });
+  }
+}
+
+async function runRoutine(action) {
+  try {
+    const r = await api('/api/routine', { action });
+    toast(r.queued ? '預けました。Mac が起きたら Vice が動きます'
+      : action === 'wrapup' ? 'Vice が今日の締めを作っています。できたら、あなた待ちに出ます'
+      : 'Vice が振り分けています。少しすると色がつきます');
+    if (r.queued) renderRelayBar();
+    S.sig = '';
+    await loadState();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+$('#triageBtn').addEventListener('click', () => runRoutine('triage'));
+$('#wrapupBtn').addEventListener('click', () => runRoutine('wrapup'));
 
 // ---------- あなた待ち ----------
 
@@ -727,6 +792,44 @@ function renderHead() {
   $('#workBar').hidden = !t.working;
   $('#workText').textContent = t.working || '';
   $('#sendBtn').disabled = !!t.working || S.busy;
+  renderTriageLine(t);
+}
+
+/** 今日の色の行（★中身が変わったときだけ作り直す。読み直しのたびに作ると、押した瞬間にボタンが消えることがある） */
+function renderTriageLine(t) {
+  const tl = $('#triageLine');
+  // ★中身が変わったときだけ作り直す（読み直しのたびに作ると、押した瞬間にボタンが消えることがある）
+  const tr = t.triage || {};
+  const tsig = JSON.stringify([t.id, tr.color, tr.reason, tr.ask, !!t.done, !!t.working]);
+  if (tsig === S.triageSig) return;
+  S.triageSig = tsig;
+  tl.textContent = '';
+  tl.hidden = !(t.triage && !t.done);
+  if (t.triage && !t.done) {
+    const pill = document.createElement('span');
+    pill.className = 'tchip tc-' + t.triage.color;
+    pill.textContent = t.triage.label;
+    const text = document.createElement('span');
+    text.className = 'tl__text';
+    text.textContent = t.triage.meaning + (t.triage.reason ? '：' + t.triage.reason : '')
+      + (t.triage.ask ? '／頼むなら：' + t.triage.ask : '');
+    tl.append(pill, text);
+    if (t.triage.ask) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = '頼む';
+      b.disabled = !!t.working;
+      b.addEventListener('click', async () => {
+        try {
+          const r = await api('/api/task/' + t.id + '/ask', {});
+          toast(r.queued ? '預けました。Mac が起きたら AI に渡します' : 'AI に頼みました');
+          if (r.queued) renderRelayBar();
+          tick();
+        } catch (e) { toast(e.message); }
+      });
+      tl.append(b);
+    }
+  }
 }
 
 $('#dDone').addEventListener('click', () => { if (S.open) toggleDone(S.open); });
