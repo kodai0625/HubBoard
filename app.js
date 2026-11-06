@@ -60,6 +60,7 @@ const S = {
   inboxSig: '',                        // 前に描いたあなた待ち（同じなら描き直さない。書きかけを消さないため）
   inboxPushed: false,
   colorFilter: '',                     // 今日の色で絞る（'' = 絞らない）
+  space: store.get('hub-space'),       // 見ている側（'' = すべて・personal・work）
   triageSig: '',                       // 前に描いた「今日の色」の行
 };
 
@@ -298,7 +299,7 @@ function renderList() {
   renderToday(st);
 
   // あなた待ち
-  const ib = st.inbox || [];
+  const ib = (st.inbox || []).filter(inSpace);
   $('#inboxCard').hidden = false;
   $('#inboxCount').textContent = ib.length ? ib.length + '件' : 'なし';
   $('#inboxCard').classList.toggle('is-empty', !ib.length);
@@ -317,7 +318,7 @@ function renderList() {
   box.textContent = '';
   let shown = 0;
   st.sections.forEach((sec) => {
-    const tasks = sec.tasks.filter((t) => (!S.project || t.project === S.project)
+    const tasks = sec.tasks.filter((t) => (!S.project || t.project === S.project) && inSpace(t)
       && (!S.colorFilter || (t.triage && t.triage.color === S.colorFilter)));
     if (!tasks.length) return;
     shown += tasks.length;
@@ -351,6 +352,12 @@ function row(t) {
   title.textContent = t.title;
   const sub = document.createElement('div');
   sub.className = 'row__s';
+  if (t.space === 'work' && !S.space) {
+    const w = document.createElement('span');
+    w.className = 'wpill';
+    w.textContent = '会社';
+    sub.append(w);
+  }
   if (t.triage && !t.done) {
     const pill = document.createElement('span');
     pill.className = 'tpill tc-' + t.triage.color;
@@ -384,7 +391,7 @@ function row(t) {
   txt.textContent = t.working ? ('⚙︎ ' + t.working) : bits.concat(t.lastLine ? [t.lastLine] : []).join('　');
   sub.append(txt);
   main.append(title);
-  if (sub.childNodes.length && (p || t.due || t.triage || txt.textContent)) main.append(sub);
+  if (sub.childNodes.length && (p || t.due || t.triage || t.space === 'work' || txt.textContent)) main.append(sub);
   if (t.kind === 'pending') {
     main.addEventListener('click', () => toast('Mac が起きたら足します'));
     check.disabled = true;
@@ -442,7 +449,7 @@ $('#addForm').addEventListener('submit', async (e) => {
   if (!title) return;
   input.disabled = true;
   try {
-    const r = await api('/api/task', { title, project: S.project || null });
+    const r = await api('/api/task', { title, project: S.project || null, space: S.space || 'personal' });
     input.value = '';
     if (r.queued) { toast('預けました。Mac が起きたら足します'); renderRelayBar(); S.sig = ''; }
     await loadState();
@@ -453,11 +460,30 @@ $('#addForm').addEventListener('submit', async (e) => {
   }
 });
 
+// ---------- 個人と会社 ----------
+
+function inSpace(x) { return !S.space || (x.space || 'personal') === S.space; }
+
+document.querySelectorAll('#spaceSeg button').forEach((b) => {
+  b.classList.toggle('on', (b.dataset.space || '') === (S.space || ''));
+  b.addEventListener('click', () => {
+    S.space = b.dataset.space || '';
+    store.set('hub-space', S.space);
+    document.querySelectorAll('#spaceSeg button').forEach((x) => x.classList.toggle('on', x === b));
+    S.sig = '';
+    S.inboxSig = '';
+    renderList();
+  });
+});
+
 // ---------- 今日（朝の振り分け・夜の締め） ----------
 
 function renderToday(st) {
   const td = st.today || { counts: {} };
-  const counts = td.counts || {};
+  const counts = {};
+  st.sections.forEach((s) => s.tasks.forEach((t) => {
+    if (!t.done && t.triage && inSpace(t)) counts[t.triage.color] = (counts[t.triage.color] || 0) + 1;
+  }));
   $('#todayCard').hidden = false;
   const box = $('#todayChips');
   box.textContent = '';
@@ -532,7 +558,7 @@ function closeInboxView() {
 }
 
 function renderInbox() {
-  const items = (S.state && S.state.inbox) || [];
+  const items = ((S.state && S.state.inbox) || []).filter(inSpace);
   const sig = items.map((x) => x.id).join(',');
   if (sig === S.inboxSig) return;
   S.inboxSig = sig;
@@ -550,7 +576,7 @@ function renderInbox() {
 
 function inboxItem(x) {
   const d = document.createElement('div');
-  d.className = 'ibx ibx--' + x.kind;
+  d.className = 'ibx ibx--' + x.kind + (x.urgent ? ' ibx--urgent' : '');
   const head = document.createElement('div');
   head.className = 'ibx__head';
   const k = document.createElement('span');
@@ -563,7 +589,14 @@ function inboxItem(x) {
   t.addEventListener('click', () => { closeInboxView(); openTask(x.task); });
   const at = document.createElement('span');
   at.textContent = hm(new Date(x.at * 1000));
-  head.append(k, t, at);
+  if (x.space === 'work') {
+    const w = document.createElement('span');
+    w.className = 'ibx__space';
+    w.textContent = '会社';
+    head.append(k, w, t, at);
+  } else {
+    head.append(k, t, at);
+  }
   const title = document.createElement('div');
   title.className = 'ibx__title';
   title.textContent = x.title;
@@ -972,12 +1005,13 @@ $('#stopBtn').addEventListener('click', async () => {
 
 function setTab(tab) {
   S.tab = tab;
-  document.querySelectorAll('.seg button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+  // ★チャットとメモのタブだけ（上の「すべて／個人／会社」も .seg なので、data-tab で絞る）
+  document.querySelectorAll('.seg button[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
   $('#chatPane').hidden = tab !== 'chat';
   $('#memoPane').hidden = tab !== 'memo';
 }
 
-document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
+document.querySelectorAll('.seg button[data-tab]').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
 
 function setMemoNote(text, warn) {
   const n = $('#memoNote');

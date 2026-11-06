@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="format-detection" content="telephone=no">
 <link rel="apple-touch-icon" href="icon.png">
-<link rel="stylesheet" href="style.css?v=f1a3af97">
+<link rel="stylesheet" href="style.css?v=fefa8709">
 <title>Hub Board</title>
 </head>
 <body>
@@ -27,6 +27,11 @@
       <span id="conn" class="conn" role="status"></span>
     </header>
     <div class="relaybar" data-relaybar hidden></div>
+    <div id="spaceSeg" class="seg seg--space" role="tablist" aria-label="個人と会社">
+      <button type="button" data-space="" class="on">すべて</button>
+      <button type="button" data-space="personal">個人</button>
+      <button type="button" data-space="work">会社</button>
+    </div>
     <nav id="projects" class="chips" aria-label="プロジェクト"></nav>
     <main class="scroll" id="listScroll">
       <button id="viceCard" class="vice" type="button">
@@ -121,7 +126,7 @@
 
   <div id="toast" class="toast" role="alert" hidden></div>
 </div>
-<script src="relay.js?v=f1a3af97"></script>
-<script src="app.js?v=f1a3af97"></script>
+<script src="relay.js?v=fefa8709"></script>
+<script src="app.js?v=fefa8709"></script>
 </body>
 </html>

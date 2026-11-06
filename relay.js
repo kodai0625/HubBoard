@@ -190,7 +190,7 @@ const Relay = {
       st.sections.unshift({
         id: 'pending',
         title: '預けている（Mac が起きたら足します）',
-        tasks: adds.map((p) => ({ id: 'pending-' + p.id, kind: 'pending', title: p.title, project: p.project || null,
+        tasks: adds.map((p) => ({ id: 'pending-' + p.id, kind: 'pending', title: p.title, project: p.project || null, space: p.space || 'personal',
           due: null, done: false, pinned: false, unread: false, working: null, lastLine: '', mail: false, parent: null })),
       });
     }
@@ -226,7 +226,7 @@ const Relay = {
       return { ok: true, queued: true };
     }
     if (path === '/api/task' && body) {
-      await this.queue({ kind: 'add', title: body.title, project: body.project || null });
+      await this.queue({ kind: 'add', title: body.title, project: body.project || null, space: body.space || 'personal' });
       return { ok: true, queued: true };
     }
     const m = path.match(/^\/api\/task\/([0-9A-Fa-f-]{36})(?:\/(\w+))?/);
