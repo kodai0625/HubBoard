@@ -341,7 +341,7 @@ function row(t) {
   const check = document.createElement('button');
   check.type = 'button';
   check.className = 'check';
-  check.setAttribute('aria-label', t.done ? 'おわっていないに戻す' : 'おわった');
+  check.setAttribute('aria-label', t.done ? '終わっていないに戻す' : 'おわった');
   check.addEventListener('click', () => toggleDone(t.id));
 
   const main = document.createElement('button');
@@ -437,7 +437,7 @@ function renderFoot() {
 async function toggleDone(id) {
   try {
     const r = await api('/api/task/' + id + '/done', {});
-    if (r.queued) { toast('預けました。Mac が起きたら、おわりにします'); renderRelayBar(); S.sig = ''; }
+    if (r.queued) { toast('預けました。Mac が起きたら、終わりにします'); renderRelayBar(); S.sig = ''; }
     if (S.open) await loadTask(); else await loadState();
   } catch (e) { toast(e.message); }
 }
@@ -518,7 +518,7 @@ async function runRoutine(action) {
     const r = await api('/api/routine', { action });
     toast(r.queued ? '預けました。Mac が起きたら Vice が動きます'
       : action === 'wrapup' ? 'Vice が今日の締めを作っています。できたら、あなた待ちに出ます'
-      : 'Vice が振り分けています。少しすると色がつきます');
+      : 'Vice が振り分けています。少しすると色が付きます');
     if (r.queued) renderRelayBar();
     S.sig = '';
     await loadState();
@@ -567,7 +567,7 @@ function renderInbox() {
   if (!items.length) {
     const p = document.createElement('p');
     p.className = 'empty';
-    p.textContent = 'いま、あなたを待っているものはありません';
+    p.textContent = '今、あなたを待っているものはありません';
     box.append(p);
     return;
   }
@@ -819,7 +819,7 @@ function renderHead() {
   $('#dSub').textContent = bits.join(' · ');
   const done = $('#dDone');
   done.hidden = t.kind === 'vice';
-  done.textContent = t.done ? 'おわった ✓' : 'おわった';
+  done.textContent = t.done ? '終わった ✓' : 'おわった';
   done.classList.toggle('is-done', !!t.done);
   // 作業中
   $('#workBar').hidden = !t.working;
