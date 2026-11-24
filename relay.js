@@ -213,7 +213,7 @@ const Relay = {
 
   async api(path, body) {
     if (!this.snap || !this.snap.state) {
-      throw new Error('まだ Mac の写しがありません。いちど Mac を起こしてから、開き直してください');
+      throw new Error('まだ Mac の写しがありません。一度 Mac を起こしてから、開き直してください');
     }
     if (path === '/api/state') return this.state();
     if (path === '/api/routine' && body) {

@@ -292,7 +292,7 @@ function renderList() {
     });
     nav.append(b);
   };
-  chip('', 'すべて', '', all.length);
+  chip('', '全て', '', all.length);
   st.projects.forEach((p) => chip(p.id, p.name, p.color, all.filter((t) => t.project === p.id).length));
 
   // 今日（朝の振り分け）
@@ -620,7 +620,7 @@ function inboxItem(x) {
   if (x.kind !== 'notify') {
     area = document.createElement('textarea');
     area.rows = 1;
-    area.placeholder = x.kind === 'question' ? '答えを書く' : 'ひとこと・直してほしいこと（なくてもよい）';
+    area.placeholder = x.kind === 'question' ? '答えを書く' : '一言・直してほしいこと（なくてもよい）';
     d.append(area);
   }
   const btns = document.createElement('div');
@@ -867,7 +867,7 @@ function renderTriageLine(t) {
 
 $('#dDone').addEventListener('click', () => { if (S.open) toggleDone(S.open); });
 
-const tags = { request: 'ほかの AI からの頼み', report: '報告', pending: '預けています（Mac が起きたら AI に渡します）' };
+const tags = { request: '他の AI からの頼み', report: '報告', pending: '預けています（Mac が起きたら AI に渡します）' };
 
 function bubble(e) {
   const d = document.createElement('div');
@@ -1038,7 +1038,7 @@ async function saveMemo(force) {
     if (j.queued) renderRelayBar();
   } catch (e) {
     if (e.status === 409 && e.data && e.data.conflict && !force) {
-      const keep = confirm('Mac か AI がメモを書き換えています。\n\nOK … iPhone で書いたもので上書きする\nキャンセル … Mac のほうを読み込む（iPhone で書いたぶんは消えます）');
+      const keep = confirm('Mac か AI がメモを書き換えています。\n\nOK … iPhone で書いたもので上書きする\nキャンセル … Mac の方を読み込む（iPhone で書いた分は消えます）');
       if (keep) {
         S.memoTime = e.data.memoTime;
         btn.disabled = false;
@@ -1047,7 +1047,7 @@ async function saveMemo(force) {
       $('#memo').value = e.data.memo;
       S.memoTime = e.data.memoTime;
       S.memoDirty = false;
-      setMemoNote('Mac のほうを読み込みました');
+      setMemoNote('Mac の方を読み込みました');
     } else {
       toast(e.message);
     }
